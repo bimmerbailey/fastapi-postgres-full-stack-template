@@ -1,4 +1,4 @@
-# Social Media Scrapper For Financial Data
+# Full stack template using FastAPI, Vue, and Postgres
 
 ## Current Container Setup
 
