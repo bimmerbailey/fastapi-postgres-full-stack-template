@@ -8,7 +8,7 @@ from pydantic import BaseModel
 class LogConfig(BaseModel):
     """Logging configuration to be set for the server"""
 
-    LOGGER_NAME: str = "cars_backend"
+    LOGGER_NAME: str = "your_app"
     LOG_FORMAT: str = "%(levelprefix)s | %(asctime)s | %(message)s"
     LOG_LEVEL: str = os.environ.get("LOG_LEVEL", "DEBUG")
 
@@ -30,9 +30,9 @@ class LogConfig(BaseModel):
         },
     }
     loggers = {
-        "cars_backend": {"handlers": ["default"], "level": LOG_LEVEL},
+        "your_app": {"handlers": ["default"], "level": LOG_LEVEL},
     }
 
 
 dictConfig(LogConfig().dict())
-logger = logging.getLogger("cars_backend")
+logger = logging.getLogger("your_app")
