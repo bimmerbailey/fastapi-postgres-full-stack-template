@@ -1,0 +1,40 @@
+[tool.poetry]
+name = "app"
+version = "0.1.0"
+description = "Boiler plate API"
+authors = ["Michael Bailey <you@example.com>"]
+license = "Propietary"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+fastapi = {version = "^0.95.1", extras = ["all"]}
+structlog = "^23.1.0"
+python-jose = "^3.3.0"
+passlib = "^1.7.4"
+uvicorn = "^0.21.0"
+gunicorn = "^20.1.0"
+alembic = "^1.10.2"
+psycopg2 = "^2.9.5"
+asgi-correlation-id = "^4.2.0"
+bcrypt = "^4.0.1"
+sqlalchemy = {version = "^2.0.10", extras = ["asyncpg"]}
+asyncpg = "^0.27.0"
+
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.2.1"
+isort = "^5.12.0"
+flake8 = "^6.0.0"
+black = "^23.3.0"
+asgi-lifespan = "^2.1.0"
+pytest-asyncio = "^0.21.0"
+
+[tool.black]
+line-length=79
+
+[tool.isort]
+profile="black"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

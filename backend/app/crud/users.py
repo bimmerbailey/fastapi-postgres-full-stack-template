@@ -1,35 +1,42 @@
 from typing import Any, Optional, Union
 
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
+from sqlalchemy import ScalarResult
 
 from app.utils import hash_password, verify
 from app.crud.base import CrudBase
-from app.models.users import User
+from app.models.users import Users
 from app.schemas.users import UserCreate, UserUpdate
 
 
-class CRUDUser(CrudBase[User, UserCreate, UserUpdate]):
-    def get_by_email(self, db: Session, email: str) -> Optional[User]:
-        return db.query(self.model).filter(User.email == email).first()
+class CRUDUser(CrudBase[Users, UserCreate, UserUpdate]):
+    async def get_by_email(
+        self, db: AsyncSession, email: str
+    ) -> Optional[Users]:
+        stmt = select(self.model).where(self.model.email == email)
+        return (await db.execute(stmt)).scalar_one_or_none()
 
-    def get_users(self, db: Session, skip: int = 0, limit: int = 100):
-        return db.query(self.model).offset(skip).limit(limit).all()
-
-    @classmethod
-    def create(cls, db: Session, obj_in: UserCreate) -> User:
-        db_obj = User(
+    async def create(self, db: AsyncSession, obj_in: UserCreate) -> Users:
+        db_obj = Users(
             email=obj_in.email,
             password=hash_password(obj_in.password),
-            is_admin=obj_in.is_admin
+            is_admin=obj_in.is_admin,
+            first_name=obj_in.first_name,
+            last_name=obj_in.last_name,
         )
         db.add(db_obj)
-        db.commit()
-        db.refresh(db_obj)
+        await db.commit()
+        await db.refresh(db_obj)
         return db_obj
 
-    def update(
-            self, db: Session, *, db_obj: User, obj_in: Union[UserUpdate, dict[str, Any]]
-    ) -> User:
+    async def update(
+        self,
+        db: AsyncSession,
+        *,
+        db_obj: Users,
+        obj_in: Union[UserUpdate, dict[str, Any]]
+    ) -> Users:
         if isinstance(obj_in, dict):
             update_data = obj_in
         else:
@@ -38,23 +45,21 @@ class CRUDUser(CrudBase[User, UserCreate, UserUpdate]):
             hashed_password = hash_password(update_data["password"])
             del update_data["password"]
             update_data["hashed_password"] = hashed_password
-        return super().update(db, db_obj=db_obj, obj_in=update_data)
+        return await super().update(db, db_obj=db_obj, obj_in=update_data)
 
-    def authenticate(self, db: Session, *, email: str, password: str) -> Optional[User]:
-        user_auth = self.get_by_email(db, email=email)
-        if not user_auth:
+    async def authenticate(
+        self, db: AsyncSession, *, email: str, password: str
+    ) -> Optional[Users]:
+        user = await self.get_by_email(db=db, email=email)
+        if not user:
             return None
-        if not verify(password, user_auth.hashed_password):
+        if not verify(password, user.password):
             return None
-        return user_auth
-
-    @property
-    def is_active(self) -> bool:
-        return user.is_active
+        return user
 
     @property
     def is_admin(self) -> bool:
-        return user.is_admin
+        return self.model.is_admin
 
 
-user = CRUDUser(User)
+user = CRUDUser(Users)

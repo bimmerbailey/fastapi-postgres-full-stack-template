@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     algorithm = os.environ.get("JWT_ALGORITHM", "HS256")
     access_token_expire_minutes = os.environ.get("JWT_TOKEN_EXPIRES", 60)
     url_base = os.environ.get("URL_BASE", "localhost")
+    log_level = os.environ.get("LOG_LEVEL", "DEBUG")
 
 
 settings = Settings()

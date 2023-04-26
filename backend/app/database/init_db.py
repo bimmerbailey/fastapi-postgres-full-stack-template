@@ -1,21 +1,34 @@
-from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from typing import AsyncIterator
+
+import structlog
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+
 from app.config.config import settings
 
-SQLALCHEMY_DATABASE_URL = f"postgresql://{settings.database_username}:{settings.database_password}@" \
-                          f"{settings.database_hostname}:{settings.database_port}/{settings.database_name}"
+logger = structlog.getLogger(__name__)
 
-engine = create_engine(SQLALCHEMY_DATABASE_URL)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+SQLALCHEMY_DATABASE_URL = (
+    f"postgresql+asyncpg://{settings.database_username}:{settings.database_password}@"
+    f"{settings.database_hostname}:{settings.database_port}/{settings.database_name}"
+)
 
-Base = declarative_base()
+engine = create_async_engine(SQLALCHEMY_DATABASE_URL, pool_pre_ping=True)
+AsyncSessionLocal = async_sessionmaker(
+    bind=engine,
+    autoflush=False,
+    future=True,
+)
 
 
 # Dependency
-def get_db():
-    db = SessionLocal()
+async def get_db() -> AsyncIterator[async_sessionmaker]:
     try:
-        yield db
+        async with AsyncSessionLocal() as session:
+            yield session
+    except SQLAlchemyError as e:
+        logger.exception(e)
+        await session.rollback()
+        raise
     finally:
-        db.close()
+        await session.close()

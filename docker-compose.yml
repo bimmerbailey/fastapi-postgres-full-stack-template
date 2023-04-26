@@ -11,7 +11,9 @@ services:
       - "3000:3000"
   
   backend:
-    build: ./backend
+    build: 
+      context: ./backend
+      target: development
     depends_on:
       postgres:
         condition: service_healthy

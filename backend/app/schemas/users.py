@@ -6,18 +6,29 @@ from typing import Optional
 class UserBase(BaseModel):
     email: Optional[str] = None
     is_admin: bool = False
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
 
 
 class UserOut(UserBase):
-    id: int
     created_date: datetime
-
-    class Config:
-        orm_mode = True
 
 
 class UserCreate(UserBase):
     password: str
+    first_name: Optional[str]
+    last_name: Optional[str]
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "email": "jdoe@example.com",
+                "password": "ExAmplEpaSswOrd12",
+                "is_admin": False,
+                "first_name": "john",
+                "last_name": "doe",
+            }
+        }
 
 
 # Properties to receive via API on update
