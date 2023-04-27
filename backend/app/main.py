@@ -4,8 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.routes import auth, users
-from app.database.init_db import engine
-from app.models.base import Base
+from app.database.init_db import close_db_connection
 from app.config.config import settings
 from app.config.logging import setup_logging, setup_fastapi
 
@@ -36,4 +35,4 @@ app.include_router(users.router)
 
 @app.on_event("shutdown")
 async def shutdown():
-    await engine.dispose()
+    await close_db_connection()

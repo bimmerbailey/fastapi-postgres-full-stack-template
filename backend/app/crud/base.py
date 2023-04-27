@@ -1,9 +1,9 @@
-from typing import Generic, Type, TypeVar, Any, Optional, Union
+from typing import Generic, Type, TypeVar, Any, Union
 
 from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import desc, select, Sequence
+from sqlalchemy import desc, select
 from sqlalchemy.engine import Row
 
 from app.models.base import Base
@@ -16,19 +16,18 @@ UpdateSchemaType = TypeVar("UpdateSchemaType", bound=BaseModel)
 class CrudBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
     def __init__(self, model: Type[ModelType]):
         """
-        CRUD object with async default methods to Create, Read, Update, Delete (CRUD).
+        CRUD object with async default methods to Create, Read,
+            Update, Delete (CRUD).
         **Parameters**
         * `model`: A Beanie Document class
         """
         self.model = model
 
     async def get_all(
-        self, db: AsyncSession, skip: int = 0, limit: int = 20
-    ) -> Sequence:
-        print(self.model)
-        return [
-            i.__dict__
-            for i in (
+            self, db: AsyncSession, skip: int = 0, limit: int = 20
+    ) -> list[dict]:
+        all_items = (
+            (
                 await db.execute(
                     select(self.model)
                     .limit(limit)
@@ -38,14 +37,15 @@ class CrudBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             )
             .scalars()
             .all()
-        ]
+        )
+        return [jsonable_encoder(i) for i in all_items]
 
-    async def get_one(self, db: AsyncSession, model_id: Any) -> Row:
+    async def get_one(self, db: AsyncSession, model_id: Any) -> Row | None:
         stmt = select(self.model).where(self.model.id == int(model_id))
         return (await db.execute(stmt)).scalar_one_or_none()
 
     async def create(
-        self, db: AsyncSession, obj_in: CreateSchemaType
+            self, db: AsyncSession, obj_in: CreateSchemaType
     ) -> ModelType:
         obj_in_data = jsonable_encoder(obj_in)
         db_obj = self.model(**obj_in_data)
@@ -54,10 +54,10 @@ class CrudBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         return db_obj
 
     async def update(
-        self,
-        db: AsyncSession,
-        db_obj: ModelType,
-        obj_in: Union[UpdateSchemaType, dict[str, Any]],
+            self,
+            db: AsyncSession,
+            db_obj: ModelType,
+            obj_in: Union[UpdateSchemaType, dict[str, Any]],
     ) -> ModelType:
         obj_data = jsonable_encoder(db_obj)
         if isinstance(obj_in, dict):
@@ -79,7 +79,7 @@ class CrudBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         return obj
 
     async def filter(
-        self, db: AsyncSession, column: ModelType, value: str
-    ) -> list:
+            self, db: AsyncSession, column: ModelType, value: str
+    ) -> Row | None:
         stmt = select(self.model).where(self.model[column] == value)
         return (await db.execute(stmt)).scalar_one_or_none()

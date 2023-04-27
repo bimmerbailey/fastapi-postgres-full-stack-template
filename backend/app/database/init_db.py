@@ -32,3 +32,9 @@ async def get_db() -> AsyncIterator[async_sessionmaker]:
         raise
     finally:
         await session.close()
+
+
+async def close_db_connection():
+    logger.info("Closing connection to database...")
+    await engine.dispose()
+    logger.info("Connection closed!")
